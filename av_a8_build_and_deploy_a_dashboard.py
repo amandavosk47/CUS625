@@ -7,56 +7,50 @@ Original file is located at
     https://colab.research.google.com/drive/1yV8R7y8qX2O54AwB11AFQtDSJwE31Bas
 """
 import streamlit as st
-import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-# Load Titanic dataset
+
+# load Titanic dataset
 titanic = sns.load_dataset("titanic")
 
-# Create title and header
+# create title and header
 st.title("Titanic Passenger Survival Dashboard")
 st.write("Explore the passenger survival rates based on passenger class:")
 
-# Create passenger class filter
+# create passenger class filter
 class_choice = st.selectbox(
     "Select Passenger Class:",
-    ['All Classes', 'First Class', 'Second Class', 'Third Class']
-)
+    ['All Classes', 'First Class', 'Second Class', 'Third Class'])
 
-# Connect dropdown labels to actual dataset values
+# connect dropdown labels to dataset values
 class_mapping = {
     'First Class': 'First',
     'Second Class': 'Second',
-    'Third Class': 'Third'
-}
+    'Third Class': 'Third'}
 
-# Filter the dataset based on selection
+# filter the dataset based on selection
 if class_choice != 'All Classes':
     filtered_titanic = titanic[
-        titanic['class'] == class_mapping[class_choice]
-    ]
+        titanic['class'] == class_mapping[class_choice]]
 else:
     filtered_titanic = titanic
 
-# Calculate survival rates
+# calculate the survival counts and percentages
 survival_rate = (
-    filtered_titanic.groupby('survived')
-    .size()
-    .reset_index(name='count')
-)
+    filtered_titanic['survived']
+    .value_counts()
+    .sort_index()
+    .reset_index())
 
-# Convert survival values to labels
+survival_rate.columns = ['survived', 'count']
+
 survival_rate['survival_status'] = survival_rate['survived'].map({
     0: 'Not Survived',
-    1: 'Survived'
-})
+    1: 'Survived'})
 
-# Calculate survival percentages
-survival_rate['percentage'] = (
-    survival_rate['count'] / survival_rate['count'].sum()
-) * 100
+survival_rate['percentage'] = (survival_rate['count'] / survival_rate['count'].sum()) * 100
 
-# Create Seaborn bar chart
+# create the Seaborn bar chart
 fig, ax = plt.subplots(figsize=(8, 5))
 
 sns.barplot(
@@ -66,23 +60,19 @@ sns.barplot(
     hue='survival_status',
     palette=['#D66A6A', '#279B72'],
     legend=False,
-    ax=ax
-)
+    ax=ax)
 
-# Format chart
+# format chart to have custom titles & labels, add appropriate 100% limit
 ax.set_title(f'Passenger Survival Rates - {class_choice}')
 ax.set_xlabel('Survival Status')
 ax.set_ylabel('Survival Rate (%)')
 ax.set_ylim(0, 100)
 
-# Add percentage labels
+# add the percentage labels per bar
 for container in ax.containers:
     ax.bar_label(container, fmt='%.1f%%', padding=3)
 
 plt.tight_layout()
 
-# Close figure
-plt.close(fig)
-
-#display chart in Streamlit
+# Display chart in Streamlit
 st.pyplot(fig)
